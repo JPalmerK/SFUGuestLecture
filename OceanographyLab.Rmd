@@ -33,10 +33,10 @@ These are the packages we will use. Because the analysis gets a little intense I
 
 ```{r}
 # Load the custom functions to process soundspeeds
-source("~/GitHub/SFUOceanography/TL function.R")
+source("~/GitHub/SFUGuestLecture/TL function.R")
 
 # Load the argos data
-load("~/GitHub/indexAll.RData")
+load("~/GitHub/SFUGuestLecture/indexAll.RData")
 
 ```
 
