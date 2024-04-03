@@ -12,11 +12,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Sounds Good. Listening in the Ocean.
 
-In the lecture we discussed some of the reasons utilizing sound to study the ocean is beneficial. In the underwater enviornment, sound travels much further than light which is dispersed, absorbed, and defracted by suspended particles. Sound, on the other hand, is much more efficient in travelling through water. As such, many species from clams to beaked whales have evolved to use sound in the marine enviornment.
+In the lecture we discussed some of the reasons utilizing sound to study the ocean is beneficial. In the underwater environment, sound travels much further than light which is dispersed, absorbed, and defracted by suspended particles. Sound, on the other hand, is much more efficient in travelling through water. As such, many species from clams to beaked whales have evolved to use sound in the marine environment.
 
-In this lab we will build on the ARGOS lab by exploring how sound moves in the marine enviornment. We will download ARGOS data, extract the the temperature, salinity, and depth and use these to create a sound speed profile. We will then use ray-tracing models to look at the sound propagation through the water column. Finally, we will simulate a sound source (e.g. whale, ship, shrimp, sub) and estimate how far that sound could be detected.
+In this lab we will build on the ARGOS lab by exploring how sound moves in the marine environment. We will download ARGOS data, extract the the temperature, salinity, and depth and use these to create a soundspeed profile. We will then use ray-tracing models to look at the sound propagation through the water column. Finally, we will simulate a sound source (e.g. whale, ship, shrimp, sub) and estimate how far that sound could be detected.
 
-## Step 1 Workspace Setup
+## Workspace Setup
 
 The first step with any analysis is to set up our libraries, paths, functions, and variables. It's generally good practice to clear your work space before you start. We do this with the rm(list =ls()) command.
 
@@ -40,7 +40,50 @@ load("~/GitHub/SFUGuestLecture/indexAll.RData")
 
 ```
 
-## Step 2 Selecting the ARGOS Data
+## How Far Can You Hear It?
+
+As we discussed in the lecture, we know that sounds must received above a certain signal-to-noise ratio (**SNR**) to be detected. Most simply, SNR is defined as how loud the thing you are interested in (**Source Level; SL**) minus the background noise at the sensor (NL) and how much energy the sound signal lost covering the space between the source and receiver. This is referred to as **Transmission** or **Propagation** **Loss (TL)**.
+
+SNR= SL-TL-NL
+
+All values are in decibels and *must* be measured over the same frequency range with the same reference pressure. In this lab we are going to play with this function to first estimate our detection radius and then were are going to take a dive into propagation modelling with the ARGOS data you worked with last time.
+
+In an unrestricted environment sound will attenuate with spherical or cylindrical spreading. Imagine all the sound energy in your source at an initial time. As with surface waves on a pond, they spread away from the source location and the height (amplitude) of the wave decreases with time as the diameter of the wave increases. Thus the transmission loss can be simplified to TL= 20\* log10(r) where r is the range from source in meters
+
+```{r}
+
+# Lets simulate the the amplitude of a wave as it spreads linearly from the source location (x = 0) to some other point (x=r)
+
+
+
+# The transmission loss at 1 meter 1 km and 10kms using spherical spreading
+20*log10(1)
+20*log10(1000)
+20*log10(10000)
+
+
+```
+
+We can now calculate the SNR as a function of range. Lets assume a source (e.g. whale) produces a sound at 120 dB re 1uPa and the background sound level is comprised of wind and wave noise at an average of 80 dB re 1uPa
+
+```{r}
+
+
+# Range in meters
+r = seq(1,10000, length.out =200)
+SL = 120 #how loud the whale or ship or explosion is
+NL = 80 # how loud the background noise is
+
+# Signal to noise ratio
+SNR = SL-20*log10(r)-NL
+
+# Plot it!
+plot(r, SNR, xlab = 'Range (m)', ylab = 'SNR',  type='l')
+```
+
+At what range does the SNR drop below 0 db?
+
+## Loading the ARGOS Data
 
 As the last lab, we need to select one or many of the ARGOs float datasets to work with. Here we will just work with the July data.
 
@@ -66,6 +109,7 @@ temperatureJul = index2[['argos']][[1]][['temperature']]
 salJul = index2[['argos']][[1]][['salinity']]
 
 
+
 # plot July profile
 plot(temperatureJul, -pressureJul, ylim=rev(c(0,-1200)),
      xlim=c(3,13),
@@ -75,9 +119,13 @@ plot(temperatureJul, -pressureJul, ylim=rev(c(0,-1200)),
 legend('bottomright', legend='July',bty='n')
 ```
 
-## Step 3 Create the Sound Speed Profile
+## Sound Speed Profile From ARGOS
 
-The temperature, salinity, and depth (e.g. pressure) all impact the sound speed. So we will use the Macenzie equation to convert these data to a sound speed profile (ssp) and plot it.
+You previously learned that ARGOS data contain temperature, salinity, and depth information. Incidentally, these are the values we need to calculate the sound speed. We will use the Mackenzie 1981 equation to convert these variables to a sound speed for each depth step. Together this is called a sound speed profile.
+
+As with a temperature profile, which looks at the how temperature changes with depth we can begin to understand how sound travels in the ocean by creating a soundspeed profile. While this is less relevant to marine life, it does impact how sound travels in the environment as sound bends and refracts when it encounters different specific acoustic impedance values (rho \*c).
+
+In the next section of code uses the ARGOS data to create a soundspeed profile.
 
 ```{r echo =FALSE}
 
@@ -91,21 +139,25 @@ depth <- seq(0, 1200, by =3)
 temp <- tempJulfx(depth)
 sal <- salJulfx(depth)
 
-# Use the salinity and temperature to create a soundspeed profile
+# Use the salinity and temperature to calculate the soundspeed at each depth
 ssp <-soundSpeedMackenzie(D = depth, S = sal, Temp = temp)
 
-# Plot the sound speed profile
-plot(ssp, -depth)
+# Plot the soundspeed profile
+plot(ssp, -depth, xlab = 'Soundspeed',
+     ylab = 'Depth (m)',
+     main ='Soundspeed Profile (m/s)', type ='l')
 
 
 
 ```
 
-You can see that the sound speed profile changes by about 15m/s from the top of the ocean down to 1200m. This, in some cases, can cause a tunneling effect in which sound gets 'trapped' in channels. For a good example of this, Google the SOFAR channel.
+You can see that the soundspeed profile changes by about 15m/s from the top of the ocean down to 1200m. This, in some cases, can cause a tunneling effect in which sound gets 'trapped' in channels. For a good example of this, Google the SOFAR channel 🧠💥.
 
-## Step 4 Use Ray Tracing (Single Ray)
+## Ray Tracing (Single and Multiple Rays)
 
-Ray tracing in underwater acoustics is a way of mapping how sound moves underwater. It's like drawing lines to show the path of sound waves as they travel through the ocean. By doing this, scientists can figure out how sound spreads underwater and how it interacts with things like the ocean floor and underwater objects. This helps us understand underwater communication, detect submarines, and study marine life. Here we will use ray tracing to look at the path of sound produced at a certain angle.
+Ray tracing in [underwater] acoustics is a way of mapping how sound moves. We intuitively know that sound is reflected by a change of density (i.e. echos). In the ocean sound bounces off the surface and bottom as it travels away from the source.
+
+The path of travel can be represented using single lines. By doing this, scientists can figure out how sound spreads underwater and how it interacts with things like the ocean floor and underwater objects. This helps us understand underwater communication, detect submarines, and study marine life. Here we will use ray tracing to look at the path of sound produced at a certain angle.
 
 ```{r}
 # The Argos float only goes down so deep (hitting the bottom with an expensive bit of kit is ill advised). So lets populate the rest of the SSP with the value of the last observed soundspeed. This isn't perfect but it's a reasonable approximation
@@ -116,34 +168,38 @@ depth= depth[!is.na(ssp)]; ssp=ssp[!is.na(ssp)]
 # Set up a sound source (e.g. dolphin, snapping shrimp etc.) and we are going to pretend that the sound it produces travels in only one direction (theta). That sound will bounce off the surface and bottom moving away from the source.
 
 #Start distance for the source, leave at 0
-x0 = 0
+sourceDist = 0
 
 # Sound source depth in meters
-z0 = 5 
+sourceDepth = 5 
 
 # Angle at which the sound is directed
 theta0 = 2
 
 # For how long should we measure the sound (seconds)
 tt = 60
- 
-rt<-raytrace_TL(x0, z0 , theta0 , tt,  zz = depth, cc = ssp, plot=TRUE)
+
+#xxx tweak to not plot ssp
+rt<-raytrace_TL(x0=sourceDist, z0= sourceDepth, theta0, tt,  zz = depth, cc = ssp, plot=TRUE)
+
 
 ```
 
-If we look above, in a 2d space we can see that there are regions where the sound hits and regions where it misses. In reality though, very few sources are truely directional. So lets plot lots of rays. Additionally, the above plot shows how sound bounces but it does not show how sound attenuates with distance (imagine trying to hear someone at 5 meters away vs 500). So lets run the code again with 1) multiple rays and 2) exacting the transmission loss (TL) from the output.
+If we look above, in a 2d space we can see that there are regions where the sound hits and regions where it misses. In reality though, very few sources are truly directional. So lets plot lots of rays with angles between -10 and 10 deg. Additionally, the above plot shows how sound bounces but it does not show how sound attenuates with distance (imagine trying to hear someone at 5 meters away vs 500). So lets run the code again with 1) multiple rays and 2) exacting the transmission loss (TL) from the output.
 
 ```{r, echo =FALSE}
 
-# Theta values in degrees
+# Theta values in degrees, sequence command to make a sequence with an output length (length.out) of 20
 theta <-seq(-10, 10, length.out=20)
 
 # Generate data using the raytrace function
-data <- raytrace_TL(x0 = 0, z0 = 200, theta0 = theta, tt = 60, 
+data <- raytrace_TL(x0 = 0, z0 = sourceDepth, theta0 = theta, tt = 60, 
                     zz = depth, cc = ssp, plot = TRUE)
 
 
 ```
+
+TALK ABOUT MUTLIPLE WAVE WITH CONSTRUCTIVE AND DESTRUCTIVE WAVES
 
 ```{r}
 
@@ -157,7 +213,7 @@ data <- raytrace_TL(x0 = 0, z0 = 200, theta0 = theta, tt = 60,
 
 
  dfout= data.frame(x=x, z =z, TL=TL)
- dfout= subset(dfout, x<2000)
+ dfout= subset(dfout, x<4000)
 
  # Plot using ggplot and geom_point with color gradient
  ggplot(dfout, aes(x = x, y = -z, color = TL)) +
@@ -170,7 +226,7 @@ data <- raytrace_TL(x0 = 0, z0 = 200, theta0 = theta, tt = 60,
 
 Don't worry about this too much. The point is that we can see that the transmission loss increases as a function of range.
 
-## Step 5 Ray Tracing To Propagation Grid
+## Single Rays to Propagation Grid
 
 Up until this point we have been considering different rays which are like lasers in the night (insidently lasers are used in archetectural acoustics to figure out where sound travels and how much to charge for the cheap seats). But to estimate the transmission loss for an omni directional source (think lamp instead) we can average over multiple angles. The code below will take multiple source angles and average them over a grid that we set up. Don't worry about the warnings
 
@@ -179,14 +235,14 @@ Up until this point we have been considering different rays which are like laser
 # Example usage with user-defined parameters
 soureX <- 0  # Source x-coordinate
 sourceDepth <- 20  # Source depth
-theta_range <- seq(-90, 90, by = 1)  # Range of angles for multiple rays
-tt <- 100  # Total travel time
+theta_range <- seq(-90, 90, by = 2)  # Range of angles for multiple rays
+tt <- 60  # Total travel time
 
 # Set up the intended output grid for the transmission loss
-range_extent <- 20000  # Range extent in meters (e.g., 20 km)
+range_extent <- 10000  # Range extent in meters (e.g., 10 km)
 depth_extent <- max(depth)  # Depth extent in meters
 range_resolution <- 100  # Range resolution in meters (e.g., 100m)
-depth_resolution <- 10  # Depth resolution in meters (e.g., 10m)
+depth_resolution <- 20  # Depth resolution in meters (e.g., 10m)
 
 # Run the transmission loss model, this will take a little while
 result_grid <- compute_avg_TL_grid(soureX, 
@@ -202,3 +258,20 @@ result_grid <- compute_avg_TL_grid(soureX,
 p<- plotTLgrid(result_grid)
 p
 ```
+
+DETECTABILITY
+
+```{r}
+
+SL =120 
+NL =80
+
+result_grid$avg_TL = SL- result_grid$avg_TL - NL
+
+p<- plotTLgrid(result_grid)
+p
+```
+
+SL = 120
+
+NL- 80
