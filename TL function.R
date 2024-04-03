@@ -4,8 +4,19 @@ library(ggplot2)
 
 
 
-raytrace_TL <- function(x0, z0, theta0, tt, zz, cc, plot = TRUE, progress = FALSE) {
-  # Raytracing function based on Taiki Sakai's R implementation
+raytrace_TL <- function(x0, z0, theta0, tt, zz, cc, plot = TRUE, 
+                        progress = FALSE) {
+  # Traces the ray of a sound through a varying soundspeed profile
+  #   for a fixed amount of time. Also plots the provided sound speed profile and
+  #   all traces generated. 
+  #   Origional code is from Taiki Sakai (NWFSC) and avvailable on github
+  #   https://github.com/TaikiSan21/PAMmisc/blob/137f9e885eb36421c119fdd28c5c6a94f9ccab16/R/raytrace.R#L4
+  #   Retried March 30th, 2024. Modified to include propagation loss as 18 log(r)
+  #   His code is based on written by Val Schmidt from the University of New Hampshire
+  #   Val Schmidt (2021). raytrace
+  #   https://www.mathworks.com/matlabcentral/fileexchange/26253-raytrace), 
+  #   MATLAB Central File Exchange. Retrieved June 29, 2021.
+  #
   
   # Add a zero depth and corresponding sound speed if not already present
   if (zz[1] != 0) {
@@ -217,8 +228,19 @@ compute_avg_TL_grid <- function(x0, z0, theta_range, tt, zz, cc, range_extent,
                                 depth_extent, range_resolution, 
                                 depth_resolution, progress = FALSE, plot = TRUE) {
   
-  
+  # Implementation of the ray tracing grid model to produce a grid of tranmsission
+  # loss values as a function of rand and depth from a receiver. 
+  # Inputs, source depth and location (z0, x0), 
+  # a range of propagation angles (theta_range)
+  # Maximum time to run the simulation (tt)
+  # Sound speed (cc) and depth of the soundspeed metrics (zz)
+  # Range_extent- min and max range at which to evaluate the propagation model (m)
+  # depth_extent - min and max depth to run the propagation model (m)
+  # Range_resolution -  range step size (m)
+  # depth_resolution - depth step size (m)
   # Step 1: Generate ray trace paths for all theta values
+  # Progress, whether to display the progress bar
+  # plot- whether or not to plot
   ray_paths <- list()
   for (theta in theta_range) {
     result <- raytrace_TL(x0, z0, theta, tt, zz, cc, plot = FALSE, progress = progress)
@@ -313,6 +335,10 @@ plotTLgrid<-function(result_grid){
 # Calculat the the speed of sound using Mcenzy
 # Equation for soundspeed based on temperature, salinity and depth
 soundSpeedMackenzie<-function(D,S,Temp){
+  # K.V. Mackenzie, Nine-term equation for the sound speed in the oceans (1981) 
+  # J. Acoust. Soc. Am. 70(3), pp 807-812
+  
+  
   c = 1448.96 + 4.591*Temp - 5.304 * 10^-2*Temp^2 + 2.374 * 10^-4*Temp^3 +
     1.340*(S-35) + 1.630 * 10^-2*D + 1.675 * 10^-7*D^2 - 1.025 *
     10^-2*Temp*(S - 35)}
