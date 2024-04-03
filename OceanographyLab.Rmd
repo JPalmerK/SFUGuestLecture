@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 In the lecture we discussed some of the reasons utilizing sound to study the ocean is beneficial. In the underwater environment, sound travels much further than light which is dispersed, absorbed, and defracted by suspended particles. Sound, on the other hand, is much more efficient in travelling through water. As such, many species from clams to beaked whales have evolved to use sound in the marine environment.
 
-In this lab we will build on the ARGOS lab by exploring how sound moves in the marine environment. We will download ARGOS data, extract the the temperature, salinity, and depth and use these to create a soundspeed profile. We will then use ray-tracing models to look at the sound propagation through the water column. Finally, we will simulate a sound source (e.g. whale, ship, shrimp, sub) and estimate how far that sound could be detected.
+In this lab we will build on the Argo data lab by exploring how sound moves in the marine environment. We will download Argo data, extract the the temperature, salinity, and depth and use these to create a soundspeed profile. We will then use ray-tracing models to look at the sound propagation through the water column. Finally, we will simulate a sound source (e.g. whale, ship, shrimp, sub) and estimate how far that sound could be detected.
 
 ## Workspace Setup
 
@@ -29,7 +29,7 @@ library(scales) # also scales
 library(viridisLite) # for colorblined friendly color scales
 ```
 
-These are the packages we will use. Because the analysis gets a little intense I've also written functions for calculating and plotting the transmission. We will load these as well as the ARGOS data from last time. **You will need to change the path to for the r script and the argos data to wherever you have them stored locally.**
+These are the packages we will use. Because the analysis gets a little intense I've also written functions for calculating and plotting the transmission. We will load these as well as the Argo data from last time. **You will need to change the path to for the r script and the Argo data to wherever you have them stored locally.**
 
 ```{r}
 # Load the custom functions to process soundspeeds
@@ -46,7 +46,7 @@ As we discussed in the lecture, we know that sounds must received above a certai
 
 SNR= SL-TL-NL
 
-All values are in decibels and *must* be measured over the same frequency range with the same reference pressure. In this lab we are going to play with this function to first estimate our detection radius and then were are going to take a dive into propagation modelling with the ARGOS data you worked with last time.
+All values are in decibels and *must* be measured over the same frequency range with the same reference pressure. In this lab we are going to play with this function to first estimate our detection radius and then were are going to take a dive into propagation modelling with the Argo data you worked with last time.
 
 In an unrestricted environment sound will attenuate with spherical or cylindrical spreading. Imagine all the sound energy in your source at an initial time. As with surface waves on a pond, they spread away from the source location and the height (amplitude) of the wave decreases with time as the diameter of the wave increases. Thus the transmission loss can be simplified to TL= 20\* log10(r) where r is the range from source in meters
 
@@ -83,9 +83,9 @@ plot(r, SNR, xlab = 'Range (m)', ylab = 'SNR',  type='l')
 
 At what range does the SNR drop below 0 db?
 
-## Loading the ARGOS Data
+## Loading the Argo Data
 
-As the last lab, we need to select one or many of the ARGOs float datasets to work with. Here we will just work with the July data.
+As the last lab, we need to select one or many of the Argo float datasets to work with. Here we will just work with the July data.
 
 ```{r argosClean, echo=FALSE}
 
@@ -119,13 +119,13 @@ plot(temperatureJul, -pressureJul, ylim=rev(c(0,-1200)),
 legend('bottomright', legend='July',bty='n')
 ```
 
-## Sound Speed Profile From ARGOS
+## Sound Speed Profile From Argo Data
 
-You previously learned that ARGOS data contain temperature, salinity, and depth information. Incidentally, these are the values we need to calculate the sound speed. We will use the Mackenzie 1981 equation to convert these variables to a sound speed for each depth step. Together this is called a sound speed profile.
+You previously learned that Argo data contain temperature, salinity, and depth information. Incidentally, these are the values we need to calculate the sound speed. We will use the Mackenzie 1981 equation to convert these variables to a sound speed for each depth step. Together this is called a sound speed profile.
 
 As with a temperature profile, which looks at the how temperature changes with depth we can begin to understand how sound travels in the ocean by creating a soundspeed profile. While this is less relevant to marine life, it does impact how sound travels in the environment as sound bends and refracts when it encounters different specific acoustic impedance values (rho \*c).
 
-In the next section of code uses the ARGOS data to create a soundspeed profile.
+In the next section of code uses the Argo data to create a soundspeed profile.
 
 ```{r echo =FALSE}
 
@@ -171,7 +171,7 @@ depth= depth[!is.na(ssp)]; ssp=ssp[!is.na(ssp)]
 sourceDist = 0
 
 # Sound source depth in meters
-sourceDepth = 5 
+sourceDepth = 200 
 
 # Angle at which the sound is directed
 theta0 = 2
@@ -190,16 +190,24 @@ If we look above, in a 2d space we can see that there are regions where the soun
 ```{r, echo =FALSE}
 
 # Theta values in degrees, sequence command to make a sequence with an output length (length.out) of 20
-theta <-seq(-10, 10, length.out=20)
+theta <-seq(-10, 10, length.out=21)
 
 # Generate data using the raytrace function
-data <- raytrace_TL(x0 = 0, z0 = sourceDepth, theta0 = theta, tt = 60, 
-                    zz = depth, cc = ssp, plot = TRUE)
+data <- raytrace_TL(x0 = 0, 
+                    z0 = sourceDepth, 
+                    theta0 = theta, 
+                    tt = 60, 
+                    zz = depth, 
+                    cc = ssp, plot = TRUE)
 
 
 ```
 
-TALK ABOUT MUTLIPLE WAVE WITH CONSTRUCTIVE AND DESTRUCTIVE WAVES
+In the above figure you can see that, depending on the angle at which the sound is directed it can fail to get above the thermocline. This doesn't mean that no sound can be heard if the source is below the thermocline but it may reduce the amplitude at the arrival location. If you were looking to find submarines that are known to travel mostly at 200m where should and shouldn't you put your hydrophone in order to increase your chances of hearing it.
+
+## Transmission Loss
+
+In the above section we looked at how sound travels and before that we considered transmission loss. Moving forward we will consider both of them together. The following plot shows the transmission loss at various locations from the source
 
 ```{r}
 
@@ -212,6 +220,8 @@ TALK ABOUT MUTLIPLE WAVE WITH CONSTRUCTIVE AND DESTRUCTIVE WAVES
  TL <- unlist(lapply(data$TL, head, n = min_length))
 
 
+ # Create a new datafram out of our rt list and limit the range to only plot
+ # from r = 0 to r = 4000
  dfout= data.frame(x=x, z =z, TL=TL)
  dfout= subset(dfout, x<4000)
 
@@ -224,7 +234,7 @@ TALK ABOUT MUTLIPLE WAVE WITH CONSTRUCTIVE AND DESTRUCTIVE WAVES
 
 ```
 
-Don't worry about this too much. The point is that we can see that the transmission loss increases as a function of range.
+Here we can see that the transmission loss increases with range so that, regardless of the angle the we do lose energy with the distance the sound has traveled. You can also see that in some regions sound arriving from multiple directions intersects. This can sometimes relate to constructive or destructive interference.
 
 ## Single Rays to Propagation Grid
 
@@ -233,8 +243,9 @@ Up until this point we have been considering different rays which are like laser
 ```{r echo=FALSE}
 
 # Example usage with user-defined parameters
-soureX <- 0  # Source x-coordinate
-sourceDepth <- 20  # Source depth
+
+#sourceDepth <- 20  # Source depth in meters (as before)
+
 theta_range <- seq(-90, 90, by = 2)  # Range of angles for multiple rays
 tt <- 60  # Total travel time
 
@@ -245,7 +256,7 @@ range_resolution <- 100  # Range resolution in meters (e.g., 100m)
 depth_resolution <- 20  # Depth resolution in meters (e.g., 10m)
 
 # Run the transmission loss model, this will take a little while
-result_grid <- compute_avg_TL_grid(soureX, 
+result_grid <- compute_avg_TL_grid(sourceDist, 
                                    sourceDepth, 
                                    theta_range, tt, depth, ssp,
                                    range_extent, depth_extent,
@@ -259,19 +270,12 @@ p<- plotTLgrid(result_grid)
 p
 ```
 
-DETECTABILITY
+## Fun Stuff (for some...)
 
-```{r}
+Some fun acoustics links
 
-SL =120 
-NL =80
+Animations of the principals of acoustics - <https://www.acs.psu.edu/drussell/Demos/Reflect-Particles/Reflect-Particles.html>
 
-result_grid$avg_TL = SL- result_grid$avg_TL - NL
+All things sound in the sea- <https://dosits.org/>
 
-p<- plotTLgrid(result_grid)
-p
-```
-
-SL = 120
-
-NL- 80
+What's your favorite animal sound from this website?

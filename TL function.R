@@ -25,7 +25,7 @@ raytrace_TL <- function(x0, z0, theta0, tt, zz, cc, plot = TRUE,
   }
   
   # Initialize variables and constants
-  MAX_BOUNCES <- 20
+  MAX_BOUNCES <- 200
   n_theta <- length(theta0)
   ray_paths_x <- vector('list', length = n_theta)
   ray_paths_z <- ray_paths_x
@@ -95,7 +95,8 @@ raytrace_TL <- function(x0, z0, theta0, tt, zz, cc, plot = TRUE,
     
     while (t < tt) {
       if (q > length(g)) {
-        warning('CCOM:outofBounds Not enough bounces specified for time requested. Increase MAXBOUNCES')
+        warning('CCOM:outofBounds Not enough bounces specified for time requested.
+                Increase MAXBOUNCES')
         break
       }
       
@@ -180,11 +181,11 @@ raytrace_TL <- function(x0, z0, theta0, tt, zz, cc, plot = TRUE,
     plot <- rep(plot, 2)
   }
   
-  if (plot[1]) {
-    plot(cc[1:n_svp], zz, ylab = 'Depth, m', xlab = 'Sound Speed, m/s', type = 'l')
-    title('Sound Speed Profile')
-  }
-  
+  # if (plot[1]) {
+  #   plot(cc[1:n_svp], zz, ylab = 'Depth, m', xlab = 'Sound Speed, m/s', type = 'l')
+  #   title('Sound Speed Profile')
+  # }
+  # 
   if (plot[2]) {
     x_range <- range(sapply(ray_paths_x, range))
     z_range <- range(sapply(ray_paths_z, range))
