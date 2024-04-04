@@ -7,7 +7,7 @@ date: "2024-04-01"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE) 
 ```
 
 ## Sounds Good. Listening in the Ocean.
@@ -87,7 +87,7 @@ At what range does the SNR drop below 0 db?
 
 As the last lab, we need to select one or many of the Argo float datasets to work with. Here we will just work with the July data.
 
-```{r argosClean, echo=FALSE}
+```{r}
 
 # Plot all of the ARGOS float locations
 plot(argosClean, which="map", bathymetry=TRUE,
@@ -99,7 +99,7 @@ plot(argosClean, which="map", bathymetry=TRUE,
 
 This should look familiar! Now lets select one of the floats from July (where there is a thermocline).
 
-```{r echo=FALSE}
+```{r}
 
 argosID = argosClean[['ID']]
 index2 = subset(argosClean, ID="4901570") # select one track ID
@@ -115,7 +115,7 @@ plot(temperatureJul, -pressureJul, ylim=rev(c(0,-1200)),
      xlim=c(3,13),
      xlab='Temperature (C)', ylab='Depth (dbar)',
      pch=16, col=rgb(0,0,0,.4),
-     type='o')
+     type='l')
 legend('bottomright', legend='July',bty='n')
 ```
 
@@ -127,7 +127,7 @@ As with a temperature profile, which looks at the how temperature changes with d
 
 In the next section of code uses the Argo data to create a soundspeed profile.
 
-```{r echo =FALSE}
+```{r}
 
 # Functions to create a smooth temp/salintiy gradient at arbitrary depths.
 salJulfx = approxfun(pressureJul, salJul)
@@ -180,7 +180,8 @@ theta0 = 2
 tt = 60
 
 #xxx tweak to not plot ssp
-rt<-raytrace_TL(x0=sourceDist, z0= sourceDepth, theta0, tt,  zz = depth, cc = ssp, plot=TRUE)
+rt<-raytrace_TL(x0=sourceDist, z0= sourceDepth, 
+                theta0, tt,  zz = depth, cc = ssp, plot=TRUE, progress = FALSE)
 
 
 ```
@@ -240,7 +241,7 @@ Here we can see that the transmission loss increases with range so that, regardl
 
 Up until this point we have been considering different rays which are like lasers in the night (insidently lasers are used in archetectural acoustics to figure out where sound travels and how much to charge for the cheap seats). But to estimate the transmission loss for an omni directional source (think lamp instead) we can average over multiple angles. The code below will take multiple source angles and average them over a grid that we set up. Don't worry about the warnings
 
-```{r echo=FALSE}
+```{r}
 
 # Example usage with user-defined parameters
 
@@ -261,7 +262,7 @@ result_grid <- compute_avg_TL_grid(sourceDist,
                                    theta_range, tt, depth, ssp,
                                    range_extent, depth_extent,
                                    range_resolution, depth_resolution,
-                                   progress = TRUE,
+                                   progress = FALSE,
                                    plot = TRUE)
 
 
