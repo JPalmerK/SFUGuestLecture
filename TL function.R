@@ -9,7 +9,7 @@ raytrace_TL <- function(x0, z0, theta0, tt, zz, cc, plot = TRUE,
   # Traces the ray of a sound through a varying soundspeed profile
   #   for a fixed amount of time. Also plots the provided sound speed profile and
   #   all traces generated. 
-  #   Origional code is from Taiki Sakai (NWFSC) and avvailable on github
+  #   Original code is from Taiki Sakai (NWFSC) and available on github
   #   https://github.com/TaikiSan21/PAMmisc/blob/137f9e885eb36421c119fdd28c5c6a94f9ccab16/R/raytrace.R#L4
   #   Retried March 30th, 2024. Modified to include propagation loss as 18 log(r)
   #   His code is based on written by Val Schmidt from the University of New Hampshire

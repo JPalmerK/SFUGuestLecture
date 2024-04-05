@@ -1,8 +1,12 @@
 ---
 title: "Oceanography Lab"
 output:
-  word_document: default
+  github_document: default
   pdf_document: default
+  word_document: default
+  output: github_document
+  html_document:
+    df_print: paged
 date: "2024-04-01"
 ---
 
