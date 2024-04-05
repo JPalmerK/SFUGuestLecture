@@ -2,6 +2,12 @@ Oceanography Lab
 ================
 2024-04-01
 
+This tutorial illustrates some very basic principles of how sound moves through a medium with a varying soundspeed profile
+This is based on previous lectures and labs in the SFU course that extracted temperature, salinity, and pressure from Argos data. 
+
+The methods implemented here are highly simplified and not suitable for research. However, they do demonstrate some of the concepts decently well.
+Please use and cite appropriately especially noting the raytrace_TL function which was modified by the author but is based on pervious works whcih are documented in the comments. 
+
 ## Sounds Good. Listening in the Ocean.
 
 In the lecture we discussed some of the reasons utilizing sound to study
